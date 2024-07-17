@@ -42,3 +42,43 @@ app.get("/api/todoapp/getnotes", async (req, res) => {
     res.status(500).send(error); // Retourner une erreur
   }
 });
+
+
+// Route POST pour ajouter une nouvelle note
+app.post("/api/todoapp/addnote", async (req, res) => {
+  const newNote = { description: req.body.description }; // Créer un nouvel objet note avec la description
+
+  if (!newNote.description) {
+    return res.status(400).send("No note description provided"); // Vérifier si la description est fournie
+  }
+
+  try {
+    const result = await database
+      .collection("todoappcollection") // Accéder à la collection des notes
+      .insertOne(newNote); // Insérer la nouvelle note
+    res.status(201).send({ _id: result.insertedId, ...newNote }); // Retourner la note ajoutée avec son ID
+  } catch (error) {
+    console.error("Error adding note: ", error); // Gérer les erreurs d'ajout
+    res.status(500).send(error); // Retourner une erreur
+  }
+});
+
+// Route DELETE pour supprimer une note par ID
+app.delete("/api/todoapp/deletenote/:id", async (req, res) => {
+  const noteId = req.params.id; // Récupérer l'ID de la note depuis les paramètres de l'URL
+
+  try {
+    const result = await database
+      .collection("todoappcollection") // Accéder à la collection des notes
+      .deleteOne({ _id: new ObjectId(noteId) }); // Supprimer la note avec l'ID correspondant
+
+    if (result.deletedCount === 0) {
+      return res.status(404).send("Note not found"); // Vérifier si une note a été supprimée
+    }
+
+    res.status(204).send(); // Pas de contenu à retourner après la suppression
+  } catch (error) {
+    console.error("Error deleting note: ", error); // Gérer les erreurs de suppression
+    res.status(500).send(error); // Retourner une erreur
+  }
+});
