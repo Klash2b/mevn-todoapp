@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liste des Notes</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@2.6.0/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <!-- Importation des styles de Vuetify via CDN-->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <!-- Importation des icônes Material Design via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <!-- Importation de Vue.js via CDN-->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Importation d'Axios pour les requêtes HTTP, via CDN-->
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.0/dist/vuetify.js"></script>
+    <!-- Importation de Vuetify via CDN -->
+  </head>
+  <body>
+    <div id="app">
+      <v-app>
+        <v-container>
+          <h1 class="text-center">Liste des Notes</h1>
+
+          <v-row>
+            <v-col cols="12" md="8">
+              <v-text-field
+                v-model="newNote.description"
+                label="Description de la note"
+                outlined
+                @keyup.enter="addNote"
+              ></v-text-field>
+              <!-- Champ de saisie pour écrire la description de la note -->
+            </v-col>
+            <v-col cols="12" md="4">
+              <v-btn @click="addNote" color="primary" block>
+                <!-- Bouton pour ajouter une note -->
+                Ajouter Note
+              </v-btn>
+            </v-col>
+          </v-row>
+
+          <v-list>
+            <v-list-item-group>
+              <v-list-item
+                v-for="note in notes"
+                :key="note._id"
+                class="ma-2"
+                outlined
+              >
+                <!--
+                Boucle
+                pour
+                afficher
+                chaque
+                note, avec une clé unique
+                -->
+                <v-list-item-content>
+                  <v-list-item-title>{{ note.description }}</v-list-item-title>
+                  <!-- Afficher la description de la note -->
+                </v-list-item-content>
+                <v-list-item-action>
+                  <v-btn @click="deleteNote(note._id)" color="red" icon>
+                    <!-- Bouton pour supprimer la note -->
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                </v-list-item-action>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-container>
+      </v-app>
+    </div>
+
+    <script>
+      new Vue({
+        el: "#app", // Élément HTML dans lequel Vue.js sera monté
+        vuetify: new Vuetify(), // Initialiser Vuetify
+        data: {
+          notes: [], // Tableau pour stocker les notes
+          newNote: {
+            description: "",
+          },
+        },
+        methods: {
+          fetchNotes() {
+            // Méthode pour récupérer les notes depuis l'API
+            axios
+              .get("http://localhost:5038/api/todoapp/getnotes") // Requête GET pour obtenir les notes
+              .then((response) => {
+                this.notes = response.data; // Mettre à jour le tableau de notes
+              })
+              .catch((error) => {
+                console.error(
+                  "Erreur lors de la récupération des notes:",
+                  error
+                );
+              });
+          },
+          addNote() {
+            // Méthode pour ajouter une nouvelle note
+            axios
+              .post("http://localhost:5038/api/todoapp/addnote", this.newNote) // Requête POST pour ajouter la note
+              .then((response) => {
+                this.notes.push(response.data); // Ajouter la note à la liste
+                this.newNote.description = ""; // Réinitialiser le champ d'entrée
+              })
+              .catch((error) => {
+                console.error("Erreur lors de l'ajout de la note:", error);
+              });
+          },
+          deleteNote(id) {
+            // Méthode pour supprimer une note par ID
+            axios
+              .delete(`http://localhost:5038/api/todoapp/deletenote/${id}`) // Requête DELETE pour supprimer la note
+              .then(() => {
+                this.notes = this.notes.filter((note) => note._id !== id); // Mettre à jour la liste après suppression
+              })
+              .catch((error) => {
+                console.error(
+                  "Erreur lors de la suppression de la note:",
+                  error
+                );
+              });
+          },
+        },
+        created() {
+          this.fetchNotes(); // Récupérer les notes lors de la création du composant
+        },
+      });
+    </script>
+  </body>
+</html>
